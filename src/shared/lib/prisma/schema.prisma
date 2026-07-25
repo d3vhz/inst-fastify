@@ -1,0 +1,74 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "./generated"
+  previewFeatures = ["partialIndexes"]
+  moduleFormat    = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["auth", "public"]
+}
+model AuthUsers {
+  instanceId                  String?                @map("instance_id") @db.Uuid
+  id                          String                 @id @db.Uuid
+  aud                         String?                @db.VarChar(255)
+  role                        String?                @db.VarChar(255)
+  email                       String?                @unique(map: "users_email_partial_key", where: raw("(is_sso_user = false)")) @db.VarChar(255)
+  users                       Users?
+
+  @@index([instanceId])
+  @@map("users")
+  @@schema("auth")
+}
+
+model Users {
+  id         String      @id @db.Uuid
+  firstName  String?     @map("first_name")
+  lastName   String?     @map("last_name")
+  avatarUrl  String?     @map("avatar_url")
+  roles      String[]    @default(["user"])
+  createdAt  DateTime    @default(dbgenerated("timezone('utc'::text, now())")) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime    @default(dbgenerated("timezone('utc'::text, now())")) @map("updated_at") @db.Timestamptz(6)
+  post_likes PostLikes[]
+  posts      Posts[]
+  users      AuthUsers   @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("users")
+  @@schema("public")
+}
+
+enum Status {
+  active
+  archived
+
+  @@map("post_status")
+  @@schema("public")
+}
+
+model Posts {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String      @map("user_id") @db.Uuid
+  imgUrls    String[]    @default([]) @map("img_urls")
+  caption    String      @db.VarChar(500)
+  status     Status
+  likes      Int         @default(0)
+  createdAt  DateTime    @default(dbgenerated("timezone('utc'::text, now())")) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime    @default(dbgenerated("timezone('utc'::text, now())")) @map("updated_at") @db.Timestamptz(6)
+  post_likes PostLikes[]
+  users      Users       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("posts")
+  @@schema("public")
+}
+
+model PostLikes {
+  postId String @map("post_id") @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  posts  Posts  @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users  Users  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([postId, userId])
+  @@map("post_likes")
+  @@schema("public")
+}
