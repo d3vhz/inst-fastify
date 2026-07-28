@@ -2,8 +2,8 @@ import { FastifyInstance } from "fastify";
 
 import { Prisma } from "~/shared/lib";
 
-import { CreatePost, PostQuery, UpdatePost } from "./types";
 import { buildWhere } from "./helpers";
+import { CreatePost, PostQuery, UpdatePost } from "./types";
 
 function createPostsRepository(fastify: FastifyInstance) {
   const prisma = fastify.prisma;
@@ -12,7 +12,7 @@ function createPostsRepository(fastify: FastifyInstance) {
     async paginate(q: PostQuery) {
       const skip = (q.page - 1) * q.limit;
 
-      const where = buildWhere(q)
+      const where = buildWhere(q);
 
       const [posts, total] = await Promise.all([
         prisma.posts.findMany({

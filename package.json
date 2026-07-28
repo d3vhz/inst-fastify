@@ -12,7 +12,14 @@
     "prisma:generate": "npx prisma generate",
     "lint": "oxlint src",
     "fmt": "oxfmt src",
-    "build": "tsc"
+    "build": "tsc",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "src/**/*.ts": ["oxlint --max-warnings=0", "oxfmt"],
+    "ignore": [
+      "**/prisma/generated/**/*.ts"
+    ]
   },
   "dependencies": {
     "@fastify/autoload": "^6.4.0",

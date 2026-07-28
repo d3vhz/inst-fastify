@@ -1,13 +1,15 @@
+CREATE TYPE public.user_role as enum ('user', 'admin');
+
 create table public.users (
   id uuid primary key
     references auth.users(id)
     on delete cascade,
-  first_name text,
-  last_name text,
+  first_name varchar(15),
+  last_name varchar(15),
   avatar_url text,
 
-  roles text[] not null
-    default array['user']::text[],
+  roles public.user_role[] not null
+    default array['user']::public.user_role[],
 
   created_at timestamptz not null
     default timezone('utc', now()),
@@ -20,26 +22,20 @@ alter table public.users
 add constraint user_valid_first_name
 check (
   first_name is null
-  or (
-    char_length(first_name) > 0
-    and char_length(first_name) <= 15
-  )
+  or char_length(first_name) > 0
 );
 
 alter table public.users
 add constraint user_valid_last_name
 check (
   last_name is null
-  or (
-    char_length(last_name) > 0
-    and char_length(last_name) <= 15
-  )
+  or char_length(last_name) > 0
 );
 
 alter table public.users
 add constraint users_valid_roles
 check (
-  roles <@ array['user', 'admin']::text[]
+  roles <@ array['user', 'admin']::public.user_role[]
   and array_length(roles, 1) > 0
 );
 
