@@ -1,4 +1,4 @@
-CREATE TYPE public.post_status AS ENUM ('active', 'archived');
+CREATE TYPE public.post_status as enum ('active', 'archived');
 
 create table public.posts (
   id uuid primary key default gen_random_uuid(),
@@ -61,10 +61,7 @@ check (public.array_urls_valid(img_urls));
 
 alter table public.posts
 add constraint posts_valid_caption
-check (
-  char_length(caption) > 0
-  and char_length(caption) <= 500
-);
+check (char_length(caption) > 0);
 
 alter table public.posts
 add constraint posts_valid_status
