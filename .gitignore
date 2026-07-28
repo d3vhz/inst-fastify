@@ -11,3 +11,4 @@
 # dotenv environment variable files
 *.env
 !.env.example
+/src/generated/prisma

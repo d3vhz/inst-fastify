@@ -12,7 +12,7 @@ export default async function serviceApp(fastify: FastifyInstance, opts: Fastify
   // This loads all external plugins defined in plugins/external
   // those should be registered first as your application plugins might depend on them
   await fastify.register(fastifyAutoload, {
-    dir: path.join(import.meta.dirname, "plugins/external"),
+    dir: path.join(import.meta.dirname, "core/plugins/external"),
     options: {},
   });
 
@@ -20,14 +20,14 @@ export default async function serviceApp(fastify: FastifyInstance, opts: Fastify
   // those should be support plugins that are reused
   // through your application
   fastify.register(fastifyAutoload, {
-    dir: path.join(import.meta.dirname, "plugins/app"),
+    dir: path.join(import.meta.dirname, "core/plugins/app"),
     options: { ...opts },
   });
 
   // This loads all plugins defined in routes
   // define your routes in one of these
   fastify.register(fastifyAutoload, {
-    dir: path.join(import.meta.dirname, "routes"),
+    dir: path.join(import.meta.dirname, "core/routes"),
     autoHooks: true,
     cascadeHooks: true,
     options: { ...opts },
