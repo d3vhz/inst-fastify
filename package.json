@@ -12,7 +12,7 @@
     "prisma:generate": "npx prisma generate",
     "lint": "oxlint src",
     "fmt": "oxfmt src",
-    "build": "tsdown",
+    "build": "npx prisma generate && tsdown",
     "prepare": "husky"
   },
   "lint-staged": {
