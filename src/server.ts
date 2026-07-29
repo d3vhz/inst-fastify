@@ -9,6 +9,7 @@
 import closeWithGrace from "close-with-grace";
 import Fastify from "fastify";
 import fp from "fastify-plugin";
+import "dotenv/config";
 
 // Import your application as a normal plugin.
 import serviceApp from "./app";
