@@ -74,9 +74,8 @@ async function init() {
   await app.ready();
 
   try {
-    // Start listening.
-    const port = Number(process.env.PORT!);
-    await app.listen({ port: port ?? 8080 });
+    const port = Number(process.env.PORT ?? 8080);
+    await app.listen({ port, host: "0.0.0.0" });
   } catch (err) {
     app.log.error(err);
     process.exit(1);
