@@ -16,6 +16,21 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
       return { message: "ok" };
     },
   );
+  fastify.get(
+    "/health",
+    {
+      schema: {
+        response: {
+          200: Type.Object({
+            status: Type.String(),
+          }),
+        },
+      },
+    },
+    async function () {
+      return { status: "ok" };
+    },
+  );
 };
 
 export default plugin;
