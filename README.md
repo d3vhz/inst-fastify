@@ -1,13 +1,14 @@
-<div align="center"> <a href="https://fastify.dev/">
+<div align="center">
+  <a href="https://fastify.dev/">
     <img
       src="https://raw.githubusercontent.com/fastify/graphics/HEAD/fastify-landscape-outlined.svg"
       width="650"
       height="auto"
     />
   </a>
-</div
+</div>
 
-# Inst
+# Inst-Fastify
 
 > Backend layer for instagram clone app with supabase auth, CRUD operations and media uploads..
 
