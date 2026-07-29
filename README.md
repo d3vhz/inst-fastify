@@ -5,35 +5,13 @@
       height="auto"
     />
   </a>
-</div>
+</div
 
-<div align="center">
+# Inst
 
-[![CI](https://github.com/fastify/fastify/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/fastify/fastify/actions/workflows/ci.yml)
-[![Package Manager
-CI](https://github.com/fastify/fastify/actions/workflows/package-manager-ci.yml/badge.svg?branch=main)](https://github.com/fastify/fastify/actions/workflows/package-manager-ci.yml)
-[![Web
-site](https://github.com/fastify/fastify/actions/workflows/website.yml/badge.svg?branch=main)](https://github.com/fastify/fastify/actions/workflows/website.yml)
-[![neostandard javascript style](https://img.shields.io/badge/code_style-neostandard-brightgreen?style=flat)](https://github.com/neostandard/neostandard)
-[![CII Best Practices](https://www.bestpractices.dev/projects/7585/badge)](https://www.bestpractices.dev/en/projects/7585/passing)
+> Backend layer for instagram clone app with supabase auth, CRUD operations and media uploads..
 
-</div>
-
-<div align="center">
-
-[![NPM
-version](https://img.shields.io/npm/v/fastify.svg?style=flat)](https://www.npmjs.com/package/fastify)
-[![NPM
-downloads](https://img.shields.io/npm/dm/fastify.svg?style=flat)](https://www.npmjs.com/package/fastify)
-[![Security Responsible
-Disclosure](https://img.shields.io/badge/Security-Responsible%20Disclosure-yellow.svg)](https://github.com/fastify/fastify/blob/main/SECURITY.md)
-[![Discord](https://img.shields.io/discord/725613461949906985)](https://discord.com/invite/fastify)
-[![Contribute with Gitpod](https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod&color=blue)](https://gitpod.io/#https://github.com/fastify/fastify)
-[![Open Collective backers and sponsors](https://img.shields.io/opencollective/all/fastify)](https://github.com/sponsors/fastify#sponsors)
-
-</div>
-
-<br />
+**Stack:** Fastify, Prisma, PostgreSQL, Supabase, Redis (in progress), RabbitMQ (in progress)
 
 An efficient server implies a lower cost of the infrastructure, better
 responsiveness under load, and happy users. How can you efficiently handle the
