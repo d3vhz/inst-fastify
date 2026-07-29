@@ -6,4 +6,9 @@ export default async function (fastify: FastifyInstance) {
       message: `Hello! See documentation at ${protocol}://${hostname}/docs`,
     };
   });
+  fastify.get("/health", () => {
+    return {
+      status: "ok",
+    };
+  });
 }
