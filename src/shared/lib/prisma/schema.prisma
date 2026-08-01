@@ -9,6 +9,23 @@ datasource db {
   provider = "postgresql"
   schemas  = ["auth", "public"]
 }
+
+enum UserRole {
+  user
+  admin
+
+  @@map("user_role")
+  @@schema("public")
+}
+
+enum Status {
+  active
+  archived
+
+  @@map("post_status")
+  @@schema("public")
+}
+
 model AuthUsers {
   instanceId                  String?                @map("instance_id") @db.Uuid
   id                          String                 @id @db.Uuid
@@ -22,35 +39,19 @@ model AuthUsers {
   @@schema("auth")
 }
 
-enum UserRole {
-  user
-  admin
-
-  @@map("user_role")
-  @@schema("public")
-}
-
 model Users {
-  id         String       @id @db.Uuid
-  firstName  String?      @map("first_name") @db.VarChar(15)
-  lastName   String?      @map("last_name") @db.VarChar(15)
-  avatarUrl  String?      @map("avatar_url")
-  roles      UserRole[]   @default([user])
-  createdAt  DateTime     @default(dbgenerated("timezone('utc'::text, now())")) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime     @default(dbgenerated("timezone('utc'::text, now())")) @map("updated_at") @db.Timestamptz(6)
+  id         String      @id @db.Uuid
+  firstName  String?     @map("first_name") @db.VarChar(15)
+  lastName   String?     @map("last_name") @db.VarChar(15)
+  avatarUrl  String?     @map("avatar_url")
+  roles      UserRole[]  @default([user])
+  createdAt  DateTime    @default(dbgenerated("timezone('utc'::text, now())")) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime    @default(dbgenerated("timezone('utc'::text, now())")) @map("updated_at") @db.Timestamptz(6)
   post_likes PostLikes[]
   posts      Posts[]
-  users      AuthUsers    @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users      AuthUsers   @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("users")
-  @@schema("public")
-}
-
-enum Status {
-  active
-  archived
-
-  @@map("post_status")
   @@schema("public")
 }
 

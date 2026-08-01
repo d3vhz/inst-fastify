@@ -1,6 +1,6 @@
 import { Type } from "typebox";
 
-import { IdSchema, UrlSchema } from "~/shared/types";
+import { NumberSchema, IdSchema, UrlSchema, DateTimeSchema } from "~/shared/types";
 
 const CaptionSchema = Type.String({
   minLength: 1,
@@ -21,6 +21,9 @@ const PostSchema = Type.Object({
   imgUrls: PostImgUrlsSchema,
   caption: CaptionSchema,
   status: PostStatusSchema,
+  likes: NumberSchema,
+  createdAt: DateTimeSchema,
+  updatedAt: DateTimeSchema,
 });
 
 const CreatePostSchema = Type.Object({
@@ -49,10 +52,16 @@ const PostPaginationResultSchema = Type.Object({
   posts: Type.Array(PostSchema),
 });
 
+const PostLikeSchema = Type.Object({
+  postId: IdSchema,
+  userId: IdSchema,
+});
+
 export {
   PostSchema,
   CreatePostSchema,
   UpdatePostSchema,
   QueryPostPaginationSchema,
   PostPaginationResultSchema,
+  PostLikeSchema,
 };

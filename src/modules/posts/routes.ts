@@ -1,5 +1,8 @@
 import { FastifyPluginAsyncTypebox, Type } from "@fastify/type-provider-typebox";
 
+import { formatTimestamps } from "~/shared/lib";
+import { IdSchema } from "~/shared/types";
+
 import { PostStatusEnum } from "./constants";
 import {
   PostSchema,
@@ -14,6 +17,7 @@ const postRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
   fastify.get(
     "/",
     {
+      preHandler: [fastify.authenticate],
       schema: {
         querystring: QueryPostPaginationSchema,
         response: {
@@ -22,8 +26,15 @@ const postRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         tags: ["Posts"],
       },
     },
-    async function (request) {
-      return postsRepository.paginate(request.query);
+    async function (request, reply) {
+      const res = await postsRepository.paginate(request.query);
+
+      reply.code(200);
+
+      return {
+        posts: res.posts.map((post) => formatTimestamps(post)),
+        total: res.total,
+      };
     },
   );
 
@@ -32,9 +43,7 @@ const postRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     {
       preHandler: [fastify.authenticate],
       schema: {
-        params: Type.Object({
-          id: Type.String(),
-        }),
+        params: Type.Object({ id: IdSchema }),
         response: {
           200: PostSchema,
           404: Type.Object({ message: Type.String() }),
@@ -43,16 +52,15 @@ const postRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       },
     },
     async function (request, reply) {
-      const post = await postsRepository.findById({
-        userId: request.user.id,
-        id: request.params.id,
-      });
+      const post = await postsRepository.findById(request.params.id);
 
       if (!post) {
         return reply.notFound("Post not found");
       }
 
-      return post;
+      reply.code(200);
+
+      return formatTimestamps(post);
     },
   );
 
@@ -63,9 +71,7 @@ const postRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       schema: {
         body: CreatePostSchema,
         response: {
-          201: {
-            id: Type.Number(),
-          },
+          201: Type.Object({ id: IdSchema }),
         },
         tags: ["Posts"],
       },
@@ -77,11 +83,11 @@ const postRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         status: PostStatusEnum.Active,
       };
 
-      const id = await postsRepository.create(newPost);
+      const createdPostId = await postsRepository.create(newPost);
 
       reply.code(201);
 
-      return { id };
+      return { id: createdPostId };
     },
   );
 
@@ -90,29 +96,34 @@ const postRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     {
       preHandler: [fastify.authenticate],
       schema: {
-        params: Type.Object({
-          id: Type.String(),
-        }),
+        params: Type.Object({ id: IdSchema }),
         body: UpdatePostSchema,
         response: {
           200: PostSchema,
+          403: Type.Object({ message: Type.String() }),
           404: Type.Object({ message: Type.String() }),
         },
         tags: ["Posts"],
       },
     },
     async function (request, reply) {
-      const updatedPost = await postsRepository.update({
+      const foundPost = await postsRepository.findById(request.params.id);
+
+      if (foundPost?.userId !== request.user.id) {
+        return reply.forbidden("Access denied. You can only update your own posts.");
+      }
+
+      const post = await postsRepository.update({
         userId: request.user.id,
         id: request.params.id,
         changes: request.body,
       });
 
-      if (!updatedPost) {
-        return reply.notFound("Post not found");
-      }
+      if (!post) return reply.notFound("Post not found");
 
-      return updatedPost;
+      reply.code(200);
+
+      return formatTimestamps(post);
     },
   );
 
@@ -121,81 +132,107 @@ const postRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     {
       preHandler: [fastify.authenticate],
       schema: {
-        params: Type.Object({
-          id: Type.String(),
-        }),
+        params: Type.Object({ id: IdSchema }),
         response: {
-          204: PostSchema,
+          200: Type.Object({ id: IdSchema }),
+          403: Type.Object({ message: Type.String() }),
           404: Type.Object({ message: Type.String() }),
         },
         tags: ["Posts"],
       },
     },
     async function (request, reply) {
-      const deletedPost = await postsRepository.delete({
+      const foundPost = await postsRepository.findById(request.params.id);
+
+      if (foundPost?.userId !== request.user.id) {
+        return reply.forbidden("Access denied. You can only delete your own posts.");
+      }
+
+      const id = await postsRepository.delete({
         userId: request.user.id,
         id: request.params.id,
       });
-      if (!deletedPost) {
-        return reply.notFound("Post not found");
-      }
 
-      return deletedPost;
+      if (!id) return reply.notFound("Post not found");
+
+      reply.code(200);
+
+      return { id };
+    },
+  );
+
+  fastify.get(
+    "/:id/post-like",
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        params: Type.Object({ id: IdSchema }),
+        response: {
+          200: Type.Object({ hasPostLike: Type.Boolean() }),
+          404: Type.Object({ message: Type.String() }),
+        },
+        tags: ["Posts"],
+      },
+    },
+    async function (request, reply) {
+      const postLike = await postsRepository.findPostLike({
+        userId: request.user.id,
+        id: request.params.id,
+      });
+
+      reply.code(200);
+
+      return {
+        hasPostLike: Boolean(postLike),
+      };
     },
   );
 
   fastify.post(
-    "/add-like",
+    "/:id/add-like",
     {
       preHandler: [fastify.authenticate],
       schema: {
-        body: Type.Object({
-          id: Type.String(),
-        }),
+        params: Type.Object({ id: IdSchema }),
         response: {
-          201: {
-            success: Type.Boolean(),
-          },
+          201: Type.Object({ id: IdSchema }),
         },
         tags: ["Posts"],
       },
     },
     async function (request, reply) {
-      await postsRepository.addLike({
+      const id = await postsRepository.addLike({
         userId: request.user.id,
-        id: request.body.id,
+        id: request.params.id,
       });
 
       reply.code(201);
 
-      return { success: true };
+      return { id };
     },
   );
 
   fastify.delete(
-    "/remove-like",
+    "/:id/remove-like",
     {
       preHandler: [fastify.authenticate],
       schema: {
-        body: Type.Object({
-          id: Type.String(),
-        }),
+        params: Type.Object({ id: IdSchema }),
         response: {
-          200: {
-            success: Type.Boolean(),
-          },
+          200: Type.Object({ id: IdSchema }),
         },
         tags: ["Posts"],
       },
     },
     async function (request, reply) {
-      await postsRepository.removeLike({
+      const id = await postsRepository.removeLike({
         userId: request.user.id,
-        id: request.body.id,
+        id: request.params.id,
       });
 
       reply.code(200);
-      return { success: true };
+
+      return { id };
     },
   );
 };
