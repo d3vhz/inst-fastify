@@ -1,4 +1,4 @@
-CREATE TYPE public.user_role as enum ('user', 'admin');
+create type public.user_role as enum ('user', 'admin');
 
 create table public.users (
   id uuid primary key
@@ -95,12 +95,4 @@ for delete
 to authenticated
 using (auth.uid() = id);
 
-create policy "Service role has full access"
-on public.users
-for all
-to service_role
-using (true)
-with check (true);
-
 grant select, update, delete on public.users to authenticated;
-grant all on public.users to service_role;

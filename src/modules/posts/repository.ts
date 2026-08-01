@@ -32,9 +32,9 @@ function createPostsRepository(fastify: FastifyInstance) {
       };
     },
 
-    async findById({ userId, id }: { userId: string; id: string }) {
+    async findById(id: string) {
       return prisma.posts.findUnique({
-        where: { userId, id },
+        where: { id },
       });
     },
 
@@ -65,7 +65,7 @@ function createPostsRepository(fastify: FastifyInstance) {
         const post = await prisma.posts.delete({
           where: { userId, id },
         });
-        return post;
+        return post.id;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
           return false;
@@ -74,35 +74,45 @@ function createPostsRepository(fastify: FastifyInstance) {
       }
     },
 
-    async addLike({ userId, id }: { userId: string; id: string }) {
-      await prisma.$transaction(async (tx) => {
-        await tx.postLikes.create({
-          data: { userId, postId: id },
-        });
-
-        await tx.posts.update({
-          where: { userId, id },
-          data: {
-            likes: { increment: 1 },
-          },
-        });
+    async findPostLike({ userId, id }: { userId: string; id: string }) {
+      return prisma.postLikes.findUnique({
+        where: {
+          postId_userId: { postId: id, userId },
+        },
       });
     },
-    async removeLike({ userId, id }: { userId: string; id: string }) {
-      await prisma.$transaction(async (tx) => {
-        await tx.postLikes.delete({
-          where: {
-            postId_userId: { userId, postId: id },
-          },
-        });
 
-        await tx.posts.update({
-          where: { userId, id },
-          data: {
-            likes: { decrement: 1 },
-          },
-        });
+    async addLike({ userId, id }: { userId: string; id: string }) {
+      const existingPostLike = await prisma.postLikes.findUnique({
+        where: {
+          postId_userId: { userId, postId: id },
+        },
       });
+
+      if (existingPostLike) return id;
+
+      const createdPostLike = await prisma.postLikes.create({
+        data: { userId, postId: id },
+      });
+
+      return createdPostLike.postId;
+    },
+    async removeLike({ userId, id }: { userId: string; id: string }) {
+      const existingPostLike = await prisma.postLikes.findUnique({
+        where: {
+          postId_userId: { userId, postId: id },
+        },
+      });
+
+      if (!existingPostLike) return id;
+
+      const deletedPostLike = await prisma.postLikes.delete({
+        where: {
+          postId_userId: { userId, postId: id },
+        },
+      });
+
+      return deletedPostLike.postId;
     },
   };
 }

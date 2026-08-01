@@ -6,8 +6,8 @@ create function public.handle_updated_at_column()
   language plpgsql
   as
 $$
-  begin
-    new.updated_at = timezone('utc'::text, now());
-    return new;
-  end;
+begin
+  new.updated_at = timezone('utc'::text, now());
+  return new;
+end;
 $$;

@@ -1,1 +1,8 @@
-export { StringSchema, EmailSchema, DateTimeSchema, IdSchema, UrlSchema } from "./common";
+export {
+  StringSchema,
+  NumberSchema,
+  EmailSchema,
+  DateTimeSchema,
+  IdSchema,
+  UrlSchema,
+} from "./common";

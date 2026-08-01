@@ -5,6 +5,8 @@ const StringSchema = Type.String({
   maxLength: 255,
 });
 
+const NumberSchema = Type.Number();
+
 const EmailSchema = Type.String({
   format: "email",
   minLength: 1,
@@ -18,6 +20,6 @@ const UrlSchema = Type.String({
 
 const DateTimeSchema = Type.String({ format: "date-time" });
 
-const IdSchema = Type.String({ minimum: 1 });
+const IdSchema = Type.String({ minLength: 1 });
 
-export { StringSchema, EmailSchema, DateTimeSchema, IdSchema, UrlSchema };
+export { StringSchema, NumberSchema, EmailSchema, DateTimeSchema, IdSchema, UrlSchema };

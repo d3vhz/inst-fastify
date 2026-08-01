@@ -41,3 +41,5 @@ using (
   bucket_id = 'inst'
   and (storage.foldername(name))[1] = auth.uid()::text
 );
+
+grant select, insert, update, delete on storage.objects to authenticated;
