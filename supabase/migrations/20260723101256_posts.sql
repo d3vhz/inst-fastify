@@ -16,6 +16,12 @@ create table public.posts (
   updated_at timestamptz not null default timezone('utc', now())
 );
 
+create table public.post_saves (
+  post_id uuid references public.posts(id) on delete cascade,
+  user_id uuid references public.users(id) on delete cascade,
+  primary key (post_id, user_id)
+);
+
 create table public.post_likes (
   post_id uuid references public.posts(id) on delete cascade,
   user_id uuid references public.users(id) on delete cascade,
@@ -101,6 +107,9 @@ check (
 alter table public.posts
 enable row level security;
 
+alter table public.post_saves
+enable row level security;
+
 alter table public.post_likes
 enable row level security;
 
@@ -129,6 +138,29 @@ for delete
 to authenticated
 using (auth.uid() = user_id);
 
+create policy "Users can read all saves"
+on public.post_saves
+for select
+to public
+using (true);
+
+create policy "Users can create own save"
+on public.post_saves
+for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+create policy "Prohibition on updating saves"
+on public.post_saves
+for update
+using (false);
+
+create policy "Users can delete own save"
+on public.post_saves
+for delete
+to authenticated
+using (auth.uid() = user_id);
+
 create policy "Users can read all likes"
 on public.post_likes
 for select
@@ -152,4 +184,4 @@ for delete
 to authenticated
 using (auth.uid() = user_id);
 
-grant select, insert, update, delete on public.posts, public.post_likes to authenticated;
+grant select, insert, update, delete on public.posts, public.post_saves, public.post_likes to authenticated;

@@ -74,7 +74,48 @@ function createPostsRepository(fastify: FastifyInstance) {
       }
     },
 
-    async findPostLike({ userId, id }: { userId: string; id: string }) {
+    async findSave({ userId, id }: { userId: string; id: string }) {
+      return prisma.postSaves.findUnique({
+        where: {
+          postId_userId: { postId: id, userId },
+        },
+      });
+    },
+
+    async addSave({ userId, id }: { userId: string; id: string }) {
+      const existingPostSave = await prisma.postSaves.findUnique({
+        where: {
+          postId_userId: { userId, postId: id },
+        },
+      });
+
+      if (existingPostSave) return id;
+
+      const createdPostSave = await prisma.postSaves.create({
+        data: { userId, postId: id },
+      });
+
+      return createdPostSave.postId;
+    },
+    async removeSave({ userId, id }: { userId: string; id: string }) {
+      const existingPostSave = await prisma.postSaves.findUnique({
+        where: {
+          postId_userId: { userId, postId: id },
+        },
+      });
+
+      if (!existingPostSave) return id;
+
+      const deletedPostSave = await prisma.postSaves.delete({
+        where: {
+          postId_userId: { userId, postId: id },
+        },
+      });
+
+      return deletedPostSave.postId;
+    },
+
+    async findLike({ userId, id }: { userId: string; id: string }) {
       return prisma.postLikes.findUnique({
         where: {
           postId_userId: { postId: id, userId },
