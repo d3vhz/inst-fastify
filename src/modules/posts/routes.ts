@@ -162,6 +162,81 @@ const postRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
   );
 
   fastify.get(
+    "/:id/post-save",
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        params: Type.Object({ id: IdSchema }),
+        response: {
+          200: Type.Object({ hasPostSave: Type.Boolean() }),
+          404: Type.Object({ message: Type.String() }),
+        },
+        tags: ["Posts"],
+      },
+    },
+    async function (request, reply) {
+      const postSave = await postsRepository.findSave({
+        userId: request.user.id,
+        id: request.params.id,
+      });
+
+      reply.code(200);
+
+      return {
+        hasPostSave: Boolean(postSave),
+      };
+    },
+  );
+
+  fastify.post(
+    "/:id/add-save",
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        params: Type.Object({ id: IdSchema }),
+        response: {
+          201: Type.Object({ id: IdSchema }),
+        },
+        tags: ["Posts"],
+      },
+    },
+    async function (request, reply) {
+      const id = await postsRepository.addSave({
+        userId: request.user.id,
+        id: request.params.id,
+      });
+
+      reply.code(201);
+
+      return { id };
+    },
+  );
+
+  fastify.delete(
+    "/:id/remove-save",
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        params: Type.Object({ id: IdSchema }),
+        response: {
+          200: Type.Object({ id: IdSchema }),
+        },
+        tags: ["Posts"],
+      },
+    },
+    async function (request, reply) {
+      const id = await postsRepository.removeSave({
+        userId: request.user.id,
+        id: request.params.id,
+      });
+
+      reply.code(200);
+
+      return { id };
+    },
+  );
+
+  fastify.get(
     "/:id/post-like",
     {
       preHandler: [fastify.authenticate],
@@ -175,7 +250,7 @@ const postRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       },
     },
     async function (request, reply) {
-      const postLike = await postsRepository.findPostLike({
+      const postLike = await postsRepository.findLike({
         userId: request.user.id,
         id: request.params.id,
       });
