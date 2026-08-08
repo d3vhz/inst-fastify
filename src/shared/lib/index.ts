@@ -1,2 +1,2 @@
 export { PrismaClient, Prisma } from "./prisma";
-export { formatTimestamps } from "./utils";
+export { deepFormatTimestamps } from "./deepFormatTimestamps";

@@ -9,37 +9,116 @@ function createPostsRepository(fastify: FastifyInstance) {
   const prisma = fastify.prisma;
 
   return {
-    async paginate(q: PostQuery) {
+    async paginate({ q, userId }: { q: PostQuery; userId: string }) {
       const skip = (q.page - 1) * q.limit;
-
       const where = buildWhere(q);
 
       const [posts, total] = await Promise.all([
-        prisma.posts.findMany({
+        prisma.post.findMany({
           where,
           skip,
           take: q.limit,
-          orderBy: {
-            createdAt: q.order,
+          orderBy: { createdAt: q.order },
+          include: {
+            user: true,
+            postLikes: {
+              take: 20,
+              orderBy: { createdAt: "desc" },
+              select: {
+                user: true,
+                postId: true,
+                userId: true,
+                createdAt: true,
+              },
+            },
           },
         }),
-        prisma.posts.count({ where }),
+        prisma.post.count({ where }),
       ]);
 
+      let likedPostIds = new Set<string>();
+      let savedPostIds = new Set<string>();
+
+      if (userId) {
+        const postIds = posts.map((p) => p.id);
+
+        if (postIds.length > 0) {
+          const userLikes = await prisma.postLike.findMany({
+            where: {
+              userId,
+              postId: { in: postIds },
+            },
+            select: { postId: true },
+          });
+
+          const userSaves = await prisma.postSave.findMany({
+            where: {
+              userId,
+              postId: { in: postIds },
+            },
+            select: { postId: true },
+          });
+
+          likedPostIds = new Set(userLikes.map((like) => like.postId));
+          savedPostIds = new Set(userSaves.map((like) => like.postId));
+        }
+      }
+
+      const postsWithLikeStatus = posts.map((post) => ({
+        ...post,
+        likedByUser: likedPostIds.has(post.id),
+        savedByUser: savedPostIds.has(post.id),
+      }));
+
       return {
-        posts,
+        posts: postsWithLikeStatus,
         total,
       };
     },
 
-    async findById(id: string) {
-      return prisma.posts.findUnique({
-        where: { id },
-      });
+    async findById({ id, userId }: { id: string; userId: string }) {
+      const [post, userLike, userSave] = await Promise.all([
+        prisma.post.findUnique({
+          where: { id },
+          include: {
+            user: true,
+            postLikes: {
+              take: 20,
+              orderBy: { createdAt: "desc" },
+              select: {
+                user: true,
+                postId: true,
+                userId: true,
+                createdAt: true,
+              },
+            },
+          },
+        }),
+        prisma.postLike.findUnique({
+          where: {
+            postId_userId: { postId: id, userId },
+          },
+          select: { userId: true },
+        }),
+        prisma.postSave.findUnique({
+          where: {
+            postId_userId: { postId: id, userId },
+          },
+          select: { userId: true },
+        }),
+      ]);
+
+      if (!post) return null;
+
+      return {
+        ...post,
+        likedByUser: Boolean(userLike),
+        savedByUser: Boolean(userSave),
+      };
     },
 
     async create(newPost: CreatePost) {
-      const post = await prisma.posts.create({
+      const post = await prisma.post.create({
         data: newPost,
       });
       return post.id;
@@ -47,7 +126,7 @@ function createPostsRepository(fastify: FastifyInstance) {
 
     async update({ userId, id, changes }: UpdatePost) {
       try {
-        const post = await prisma.posts.update({
+        const post = await prisma.post.update({
           where: { userId, id },
           data: changes,
         });
@@ -62,7 +141,7 @@ function createPostsRepository(fastify: FastifyInstance) {
 
     async delete({ userId, id }: { userId: string; id: string }) {
       try {
-        const post = await prisma.posts.delete({
+        const post = await prisma.post.delete({
           where: { userId, id },
         });
         return post.id;
@@ -75,7 +154,7 @@ function createPostsRepository(fastify: FastifyInstance) {
     },
 
     async findSave({ userId, id }: { userId: string; id: string }) {
-      return prisma.postSaves.findUnique({
+      return prisma.postSave.findUnique({
         where: {
           postId_userId: { postId: id, userId },
         },
@@ -83,7 +162,7 @@ function createPostsRepository(fastify: FastifyInstance) {
     },
 
     async addSave({ userId, id }: { userId: string; id: string }) {
-      const existingPostSave = await prisma.postSaves.findUnique({
+      const existingPostSave = await prisma.postSave.findUnique({
         where: {
           postId_userId: { userId, postId: id },
         },
@@ -91,14 +170,14 @@ function createPostsRepository(fastify: FastifyInstance) {
 
       if (existingPostSave) return id;
 
-      const createdPostSave = await prisma.postSaves.create({
+      const createdPostSave = await prisma.postSave.create({
         data: { userId, postId: id },
       });
 
       return createdPostSave.postId;
     },
     async removeSave({ userId, id }: { userId: string; id: string }) {
-      const existingPostSave = await prisma.postSaves.findUnique({
+      const existingPostSave = await prisma.postSave.findUnique({
         where: {
           postId_userId: { userId, postId: id },
         },
@@ -106,7 +185,7 @@ function createPostsRepository(fastify: FastifyInstance) {
 
       if (!existingPostSave) return id;
 
-      const deletedPostSave = await prisma.postSaves.delete({
+      const deletedPostSave = await prisma.postSave.delete({
         where: {
           postId_userId: { userId, postId: id },
         },
@@ -116,7 +195,7 @@ function createPostsRepository(fastify: FastifyInstance) {
     },
 
     async findLike({ userId, id }: { userId: string; id: string }) {
-      return prisma.postLikes.findUnique({
+      return prisma.postLike.findUnique({
         where: {
           postId_userId: { postId: id, userId },
         },
@@ -124,7 +203,7 @@ function createPostsRepository(fastify: FastifyInstance) {
     },
 
     async addLike({ userId, id }: { userId: string; id: string }) {
-      const existingPostLike = await prisma.postLikes.findUnique({
+      const existingPostLike = await prisma.postLike.findUnique({
         where: {
           postId_userId: { userId, postId: id },
         },
@@ -132,14 +211,14 @@ function createPostsRepository(fastify: FastifyInstance) {
 
       if (existingPostLike) return id;
 
-      const createdPostLike = await prisma.postLikes.create({
+      const createdPostLike = await prisma.postLike.create({
         data: { userId, postId: id },
       });
 
       return createdPostLike.postId;
     },
     async removeLike({ userId, id }: { userId: string; id: string }) {
-      const existingPostLike = await prisma.postLikes.findUnique({
+      const existingPostLike = await prisma.postLike.findUnique({
         where: {
           postId_userId: { userId, postId: id },
         },
@@ -147,7 +226,7 @@ function createPostsRepository(fastify: FastifyInstance) {
 
       if (!existingPostLike) return id;
 
-      const deletedPostLike = await prisma.postLikes.delete({
+      const deletedPostLike = await prisma.postLike.delete({
         where: {
           postId_userId: { userId, postId: id },
         },

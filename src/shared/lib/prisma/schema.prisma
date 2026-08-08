@@ -26,69 +26,71 @@ enum Status {
   @@schema("public")
 }
 
-model AuthUsers {
+model AuthUser {
   instanceId                  String?                @map("instance_id") @db.Uuid
   id                          String                 @id @db.Uuid
   aud                         String?                @db.VarChar(255)
   role                        String?                @db.VarChar(255)
   email                       String?                @unique(map: "users_email_partial_key", where: raw("(is_sso_user = false)")) @db.VarChar(255)
-  users                       Users?
+  user                        User?
 
   @@index([instanceId])
   @@map("users")
   @@schema("auth")
 }
 
-model Users {
-  id         String       @id @db.Uuid
-  firstName  String?      @map("first_name") @db.VarChar(15)
-  lastName   String?      @map("last_name") @db.VarChar(15)
-  avatarUrl  String?      @map("avatar_url")
-  roles      UserRole[]   @default([user])
-  createdAt  DateTime     @default(dbgenerated("timezone('utc'::text, now())")) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime     @default(dbgenerated("timezone('utc'::text, now())")) @map("updated_at") @db.Timestamptz(6)
-  post_likes PostLikes[]
-  post_saves PostSaves[]
-  posts      Posts[]
-  users      AuthUsers    @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model User {
+  id          String      @id @db.Uuid
+  firstName   String?     @map("first_name") @db.VarChar(15)
+  lastName    String?     @map("last_name") @db.VarChar(15)
+  avatarUrl   String?     @map("avatar_url")
+  roles       UserRole[]  @default([user])
+  createdAt   DateTime    @default(dbgenerated("timezone('utc'::text, now())")) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime    @default(dbgenerated("timezone('utc'::text, now())")) @map("updated_at") @db.Timestamptz(6)
+  postLikes   PostLike[]
+  postSaves   PostSave[]
+  posts       Post[]
+  user        AuthUser    @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("users")
   @@schema("public")
 }
 
-model Posts {
-  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId     String       @map("user_id") @db.Uuid
-  imgUrls    String[]     @default([]) @map("img_urls")
-  caption    String       @db.VarChar(500)
-  status     Status
-  likes      Int          @default(0)
-  createdAt  DateTime     @default(dbgenerated("timezone('utc'::text, now())")) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime     @default(dbgenerated("timezone('utc'::text, now())")) @map("updated_at") @db.Timestamptz(6)
-  post_likes PostLikes[]
-  post_saves PostSaves[]
-  users      Users        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model Post {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String      @map("user_id") @db.Uuid
+  imgUrls     String[]    @default([]) @map("img_urls")
+  caption     String      @db.VarChar(500)
+  status      Status
+  likes       Int         @default(0)
+  createdAt   DateTime    @default(dbgenerated("timezone('utc'::text, now())")) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime    @default(dbgenerated("timezone('utc'::text, now())")) @map("updated_at") @db.Timestamptz(6)
+  postLikes   PostLike[]
+  postSaves   PostSave[]
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("posts")
   @@schema("public")
 }
 
-model PostSaves {
-  postId String @map("post_id") @db.Uuid
-  userId String @map("user_id") @db.Uuid
-  posts   Posts  @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users   Users  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model PostSave {
+  postId      String     @map("post_id") @db.Uuid
+  userId      String     @map("user_id") @db.Uuid
+  createdAt   DateTime   @map("created_at") @default(dbgenerated("timezone('utc'::text, now())")) @db.Timestamptz(6)
+  post        Post       @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([postId, userId])
   @@map("post_saves")
   @@schema("public")
 }
 
-model PostLikes {
-  postId String @map("post_id") @db.Uuid
-  userId String @map("user_id") @db.Uuid
-  posts  Posts  @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users  Users  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model PostLike {
+  postId      String   @map("post_id") @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  createdAt   DateTime @map("created_at") @default(dbgenerated("timezone('utc'::text, now())")) @db.Timestamptz(6)
+  post        Post    @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([postId, userId])
   @@map("post_likes")

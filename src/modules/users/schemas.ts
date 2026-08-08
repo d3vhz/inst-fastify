@@ -1,6 +1,6 @@
 import { Type } from "typebox";
 
-import { IdSchema, UrlSchema, StringSchema } from "~/shared/types";
+import { IdSchema, UrlSchema, StringSchema, DateTimeSchema } from "~/shared/types";
 
 const UserRoleSchema = Type.Union([Type.Literal("user"), Type.Literal("admin")]);
 const RolesSchema = Type.Array(UserRoleSchema);
@@ -14,6 +14,8 @@ const UserSchema = Type.Object({
   firstName: firstNameSchema,
   lastName: lastNameSchema,
   roles: RolesSchema,
+  createdAt: DateTimeSchema,
+  updatedAt: DateTimeSchema,
 });
 
 const UpdateUserSchema = Type.Object({

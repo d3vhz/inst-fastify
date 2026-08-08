@@ -2,6 +2,8 @@ import { Type } from "typebox";
 
 import { NumberSchema, IdSchema, UrlSchema, DateTimeSchema } from "~/shared/types";
 
+import { UserSchema } from "../users";
+
 const CaptionSchema = Type.String({
   minLength: 1,
   maxLength: 500,
@@ -14,9 +16,22 @@ const PostImgUrlsSchema = Type.Array(UrlSchema, {
   description: "Array of valid HTTP/HTTPS URLs",
 });
 
+const PostLikeSchema = Type.Object({
+  postId: IdSchema,
+  userId: IdSchema,
+  createdAt: DateTimeSchema,
+  user: UserSchema,
+});
+
+const PostSaveSchema = Type.Object({
+  postId: IdSchema,
+  userId: IdSchema,
+  createdAt: DateTimeSchema,
+});
+
 const PostSchema = Type.Object({
   id: IdSchema,
-  userId: Type.String(),
+  userId: IdSchema,
 
   imgUrls: PostImgUrlsSchema,
   caption: CaptionSchema,
@@ -24,7 +39,18 @@ const PostSchema = Type.Object({
   likes: NumberSchema,
   createdAt: DateTimeSchema,
   updatedAt: DateTimeSchema,
+  postLikes: Type.Optional(Type.Array(PostLikeSchema)),
+  postSaves: Type.Optional(Type.Array(PostSaveSchema)),
+  user: Type.Optional(UserSchema),
 });
+
+const PostSchemaWithLikedByUser = Type.Intersect([
+  PostSchema,
+  Type.Object({
+    likedByUser: Type.Boolean(),
+    savedByUser: Type.Boolean(),
+  }),
+]);
 
 const CreatePostSchema = Type.Object({
   caption: CaptionSchema,
@@ -49,16 +75,12 @@ const QueryPostPaginationSchema = Type.Object({
 
 const PostPaginationResultSchema = Type.Object({
   total: Type.Integer({ minimum: 0, default: 0 }),
-  posts: Type.Array(PostSchema),
-});
-
-const PostLikeSchema = Type.Object({
-  postId: IdSchema,
-  userId: IdSchema,
+  posts: Type.Array(PostSchemaWithLikedByUser),
 });
 
 export {
   PostSchema,
+  PostSchemaWithLikedByUser,
   CreatePostSchema,
   UpdatePostSchema,
   QueryPostPaginationSchema,

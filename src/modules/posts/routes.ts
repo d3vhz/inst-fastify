@@ -1,6 +1,6 @@
 import { FastifyPluginAsyncTypebox, Type } from "@fastify/type-provider-typebox";
 
-import { formatTimestamps } from "~/shared/lib";
+import { deepFormatTimestamps } from "~/shared/lib";
 import { IdSchema } from "~/shared/types";
 
 import { PostStatusEnum } from "./constants";
@@ -10,6 +10,7 @@ import {
   UpdatePostSchema,
   QueryPostPaginationSchema,
   PostPaginationResultSchema,
+  PostSchemaWithLikedByUser,
 } from "./schemas";
 
 const postRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
@@ -27,14 +28,14 @@ const postRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       },
     },
     async function (request, reply) {
-      const res = await postsRepository.paginate(request.query);
+      const paginatedData = await postsRepository.paginate({
+        q: request.query,
+        userId: request.user.id,
+      });
 
       reply.code(200);
 
-      return {
-        posts: res.posts.map((post) => formatTimestamps(post)),
-        total: res.total,
-      };
+      return deepFormatTimestamps(paginatedData);
     },
   );
 
@@ -45,14 +46,17 @@ const postRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       schema: {
         params: Type.Object({ id: IdSchema }),
         response: {
-          200: PostSchema,
+          200: PostSchemaWithLikedByUser,
           404: Type.Object({ message: Type.String() }),
         },
         tags: ["Posts"],
       },
     },
     async function (request, reply) {
-      const post = await postsRepository.findById(request.params.id);
+      const post = await postsRepository.findById({
+        id: request.params.id,
+        userId: request.user.id,
+      });
 
       if (!post) {
         return reply.notFound("Post not found");
@@ -60,7 +64,7 @@ const postRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
 
       reply.code(200);
 
-      return formatTimestamps(post);
+      return deepFormatTimestamps(post);
     },
   );
 
@@ -107,7 +111,10 @@ const postRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       },
     },
     async function (request, reply) {
-      const foundPost = await postsRepository.findById(request.params.id);
+      const foundPost = await postsRepository.findById({
+        id: request.params.id,
+        userId: request.user.id,
+      });
 
       if (foundPost?.userId !== request.user.id) {
         return reply.forbidden("Access denied. You can only update your own posts.");
@@ -123,7 +130,7 @@ const postRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
 
       reply.code(200);
 
-      return formatTimestamps(post);
+      return deepFormatTimestamps(post);
     },
   );
 
@@ -142,7 +149,10 @@ const postRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       },
     },
     async function (request, reply) {
-      const foundPost = await postsRepository.findById(request.params.id);
+      const foundPost = await postsRepository.findById({
+        id: request.params.id,
+        userId: request.user.id,
+      });
 
       if (foundPost?.userId !== request.user.id) {
         return reply.forbidden("Access denied. You can only delete your own posts.");

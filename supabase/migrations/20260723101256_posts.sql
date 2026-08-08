@@ -19,12 +19,16 @@ create table public.posts (
 create table public.post_saves (
   post_id uuid references public.posts(id) on delete cascade,
   user_id uuid references public.users(id) on delete cascade,
+  created_at timestamptz not null default timezone('utc', now()),
+
   primary key (post_id, user_id)
 );
 
 create table public.post_likes (
   post_id uuid references public.posts(id) on delete cascade,
   user_id uuid references public.users(id) on delete cascade,
+  created_at timestamptz not null default timezone('utc', now()),
+
   primary key (post_id, user_id)
 );
 
@@ -164,7 +168,6 @@ using (auth.uid() = user_id);
 create policy "Users can read all likes"
 on public.post_likes
 for select
-to public
 using (true);
 
 create policy "Users can create own like"
