@@ -1,5 +1,7 @@
 import { FastifyPluginAsyncTypebox, Type } from "@fastify/type-provider-typebox";
 
+import { deepFormatTimestamps } from "~/shared/lib";
+
 import { UserSchema, UpdateUserSchema } from "./schemas";
 
 const userRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
@@ -20,13 +22,13 @@ const userRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       },
     },
     async function (request, reply) {
-      const user = await usersRepository.findById(request.user.id);
+      const user = await usersRepository.findById(request.params.id);
 
       if (!user) {
         return reply.notFound("User not found");
       }
 
-      return user;
+      return deepFormatTimestamps(user);
     },
   );
 
@@ -56,7 +58,7 @@ const userRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         return reply.notFound("User not found");
       }
 
-      return updatedUser;
+      return deepFormatTimestamps(updatedUser);
     },
   );
 
@@ -81,7 +83,7 @@ const userRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         return reply.notFound("User not found");
       }
 
-      return deletedUser;
+      return deepFormatTimestamps(deletedUser);
     },
   );
 };

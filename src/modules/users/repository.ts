@@ -9,14 +9,14 @@ function createUsersRepository(fastify: FastifyInstance) {
 
   return {
     async findById(id: string) {
-      return prisma.users.findUnique({
+      return prisma.user.findUnique({
         where: { id },
       });
     },
 
     async update({ id, changes }: UpdateUser) {
       try {
-        const user = await prisma.users.update({
+        const user = await prisma.user.update({
           where: { id },
           data: changes,
         });
@@ -31,7 +31,7 @@ function createUsersRepository(fastify: FastifyInstance) {
 
     async delete(id: string) {
       try {
-        const deletedUser = await prisma.users.delete({
+        const deletedUser = await prisma.user.delete({
           where: { id },
         });
         return deletedUser;

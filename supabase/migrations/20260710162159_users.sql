@@ -76,11 +76,10 @@ execute function public.handle_new_user();
 
 alter table public.users enable row level security;
 
-create policy "Users can read own profile"
+create policy "Users can read all profiles"
 on public.users
 for select
-to authenticated
-using (auth.uid() = id);
+using (true);
 
 create policy "Users can update own profile"
 on public.users
